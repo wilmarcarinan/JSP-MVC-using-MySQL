@@ -96,13 +96,13 @@ public class EmployeeDao {
         query.append("WHERE ");
         query.append("    FIRST_NAME = ");
         query.append("    ? ");
-        query.append("AND ");
+        query.append("OR ");
         query.append("    LAST_NAME = ");
         query.append("    ? ");
-        query.append("AND ");
+        query.append("OR ");
         query.append("    EMAIL = ");
         query.append("    ? ");
-        query.append("AND ");
+        query.append("OR ");
         query.append("    HIRE_DATE >= ");
         query.append("    ? ");
         query.append("AND ");
