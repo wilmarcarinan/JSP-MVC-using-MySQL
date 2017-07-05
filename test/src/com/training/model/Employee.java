@@ -3,6 +3,8 @@ package com.training.model;
 public class Employee {
   private int empid;
   private int totalRows;
+  private int managerId;
+  private double commission;
   private String firstName;
   private String lastName;
   private String email;
@@ -17,6 +19,10 @@ public class Employee {
     return empid;
   }
 
+  public void setEmpId(int empid) {
+    this.empid = empid;
+  }
+
   public int getTotal() {
     return totalRows;
   }
@@ -25,8 +31,12 @@ public class Employee {
     this.totalRows = totalRows;
   }
 
-  public void setEmpId(int empid) {
-    this.empid = empid;
+  public double getCommission() {
+    return commission;
+  }
+
+  public void setCommission(double commission) {
+    this.commission = commission;
   }
 
   public String getfirstName() {
@@ -101,6 +111,14 @@ public class Employee {
     this.manager = manager;
   }
 
+  public int getManagerId() {
+    return managerId;
+  }
+
+  public void setManagerId(int managerId) {
+    this.managerId = managerId;
+  }
+
   @Override
 
   public String toString() {
@@ -111,9 +129,9 @@ public class Employee {
 
               + phone + ", hireDate=" + hireDate + ", jobTitle=" + jobTitle + ", salary="
 
-              + salary + ", manager=" + manager + ", department=" + department + ", totalRows="
+              + salary + ",commission=" + commission + ", manager=" + manager + ", department="
 
-              + totalRows + "]";
+              + department + ", totalRows=" + totalRows + "]";
 
   }
 }
