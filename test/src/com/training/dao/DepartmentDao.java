@@ -47,4 +47,40 @@ public class DepartmentDao {
     }
     return departments;
   }
+
+  /** Returns the department given the manager id.
+   *
+   */
+  public Department managerOfDepartment(int managerId, String departmentName) {
+    ResultSet rs = null;
+    StringBuilder query = new StringBuilder();
+    Department department = new Department();
+
+    query.append("SELECT ");
+    query.append("    DEPARTMENT_NAME, ");
+    query.append("    MANAGER_ID ");
+    query.append("FROM ");
+    query.append("    DEPARTMENTS ");
+    query.append("WHERE ");
+    query.append("    MANAGER_ID = ");
+    query.append("    ?");
+
+    try {
+      PreparedStatement preparedStatement = connection.prepareStatement(query.toString());
+      preparedStatement.setInt(1, managerId);
+      rs = preparedStatement.executeQuery();
+
+      if (rs.next()) {
+        department.setdepartmentName(rs.getString("DEPARTMENT_NAME"));
+      } else {
+        department.setdepartmentName(" ");
+      }
+
+      preparedStatement.close();
+      rs.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+    return department;
+  }
 }

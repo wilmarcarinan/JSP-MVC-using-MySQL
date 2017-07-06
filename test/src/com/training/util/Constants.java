@@ -9,8 +9,8 @@ public class Constants {
   public final static String LIST_USER = "/ListEmployee.jsp";
 
   //Error Constants
-  public final static String ALPHANUM_FIRSTNAME = "Invalid First Name. Letters only.";
-  public final static String ALPHANUM_LASTNAME = "Invalid Last Name. Letters only.";
+  public final static String ALPHANUM_FIRSTNAME = "Invalid FIRST NAME. Letters only.";
+  public final static String ALPHANUM_LASTNAME = "Invalid LAST NAME. Letters only.";
   public final static String STRINGLENGTH_FIRSTNAME = "Enter FIRST NAME in 20 characters or less";
   public final static String STRINGLENGTH_LASTNAME = "Enter LAST NAME in 25 characters or less";
   public final static String STRINGLENGTH_EMAIL = "Enter EMAIL in 25 characters or less";
@@ -19,11 +19,10 @@ public class Constants {
   public final static String FORMAT_HIREDATE = "Enter HIRE DATE in valid format";
   public final static String FORMAT_VALIDDATE = "Enter HIRE DATE in valid date";
   public final static String FORMAT_STARTDATE = "Enter HIRE DATE (Start Date) in valid format "
-      + "Date format must be 'MM/dd/yyyy'.";
+      + "Date format must be 'yyyy/MM/dd'.";
   public final static String FORMAT_ENDDATE = "Enter HIRE DATE (End Date) in valid format "
-      + "Date format must be 'MM/dd/yyyy'.";
-  public final static String HIREDATE_ERROR = "Hire Date must have start and end date.";
-  public final static String COMPAREDATE_ERROR = "Invalid Hire Date. "
+      + "Date format must be 'yyyy/MM/dd'.";
+  public final static String COMPAREDATE_ERROR = "Invalid HIRE DATE. "
       + "Start Date must be less than End Date.";
   public final static String FIRSTNAME_REQUIRED = "FIRST NAME is required";
   public final static String LASTNAME_REQUIRED = "LAST NAME is required";
@@ -42,4 +41,5 @@ public class Constants {
   public final static String FIRSTNAME_HALFWIDTH = "Enter FIRST NAME in half-width alphanumeric";
   public final static String LASTNAME_HALFWIDTH = "Enter LAST NAME in half-width alphanumeric";
   public final static String PHONE_HALFWIDTH = "Enter PHONE in only \".\",\"-\" half-width alphanumeric";
+  public final static String PHONE_NOTVALID = "Enter PHONE without letters.";
 }

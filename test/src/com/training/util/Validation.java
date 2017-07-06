@@ -13,6 +13,8 @@ public class Validation {
    *  is not Alphanumeric.
    */
   public Boolean checkIfNotAlphaNum(String name) throws NullPointerException {
+    name = name.trim();
+    name = name.replaceAll(" ", "");
     if (name.chars().allMatch(Character::isLetter)) {
       return true;
     } else {
@@ -61,8 +63,36 @@ public class Validation {
     } else if (phone.contains("-")) {
       phone = phone.replaceAll("-", "");
       return isHalfWidth(phone);
+    } else {
+      return isHalfWidth(phone);
     }
-    return isHalfWidth(phone);
+  }
+
+  /** Returns true if phone is numeric
+   *  excluding the "." and "-" characters.
+   */
+  public Boolean phoneIsValid(String phone) {
+    if (phone.contains(".")) {
+      phone = phone.replaceAll("\\.", "");
+      return isNumeric(phone);
+    } else if (phone.contains("-")) {
+      phone = phone.replaceAll("-", "");
+      return isNumeric(phone);
+    } else {
+      return isNumeric(phone);
+    }
+  }
+
+  /** Returns true if a string can be
+   *  parse into integer.
+   */
+  public Boolean isNumeric(String isNumeric) {
+    try {
+      Long.parseLong(isNumeric);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   /** Returns true if the string is less than
@@ -94,9 +124,9 @@ public class Validation {
     if (date.length() >= 8 || date.length() <= 10) {
       String[] dateChar = date.split("/");
       if (dateChar.length == 3) {
-        int month = Integer.parseInt(dateChar[0]);
-        int year = Integer.parseInt(dateChar[2]);
-        int day = Integer.parseInt(dateChar[1]);
+        int year = Integer.parseInt(dateChar[0]);
+        int day = Integer.parseInt(dateChar[2]);
+        int month = Integer.parseInt(dateChar[1]);
         if (month <= 12) {
           if (year <= 9999 && year >= 1000) {
             if (day <= 31) {
@@ -133,9 +163,9 @@ public class Validation {
   public Boolean validDate(String date) {
     String[] dateChar = date.split("/");
     if (dateChar.length == 3) {
-      int month = Integer.parseInt(dateChar[0]);
-      int year = Integer.parseInt(dateChar[2]);
-      int day = Integer.parseInt(dateChar[1]);
+      int year = Integer.parseInt(dateChar[0]);
+      int day = Integer.parseInt(dateChar[2]);
+      int month = Integer.parseInt(dateChar[1]);
       if (month <= 12) {
         if (year <= 9999 && year >= 1000) {
           if (day <= 31) {
@@ -170,12 +200,12 @@ public class Validation {
     if (checkIfDate(date1) && checkIfDate(date2)) {
       String[] dateArr1 = date1.split("/");
       String[] dateArr2 = date2.split("/");
-      int month1 = Integer.parseInt(dateArr1[0]);
-      int month2 = Integer.parseInt(dateArr2[0]);
-      int day1 = Integer.parseInt(dateArr1[1]);
-      int day2 = Integer.parseInt(dateArr2[1]);
-      int year1 = Integer.parseInt(dateArr1[2]);
-      int year2 = Integer.parseInt(dateArr2[2]);
+      int year1 = Integer.parseInt(dateArr1[0]);
+      int year2 = Integer.parseInt(dateArr2[0]);
+      int month1 = Integer.parseInt(dateArr1[1]);
+      int month2 = Integer.parseInt(dateArr2[1]);
+      int day1 = Integer.parseInt(dateArr1[2]);
+      int day2 = Integer.parseInt(dateArr2[2]);
 
       if (year2 > year1) {
         return true;

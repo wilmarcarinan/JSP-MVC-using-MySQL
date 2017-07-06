@@ -16,7 +16,6 @@ import java.util.List;
 
 public class EmployeeDao {
   private Connection connection;
-  private Conversion convert = new Conversion();
   ResultSet rs = null;
 
   public EmployeeDao() {
@@ -69,7 +68,7 @@ public class EmployeeDao {
         employee.setlastName(rs.getString("LAST_NAME"));
         employee.setEmail(rs.getString("EMAIL"));
         employee.setPhone(rs.getString("PHONE_NUMBER"));
-        employee.sethireDate(convert .formatDate(rs.getDate("HIRE_DATE"),"MM/dd/yyyy"));
+        employee.sethireDate(convert .formatDate(rs.getDate("HIRE_DATE"),"yyyy/MM/dd"));
         employee.setjobTitle(rs.getString("JOB_TITLE"));
         employee.setSalary(convert.formatDecimal(rs.getDouble("SALARY")));
         employee.setCommission(rs.getDouble("COMMISSION_PCT"));
@@ -234,9 +233,10 @@ public class EmployeeDao {
   /** Return true if the email entered by the
    *  user already exist in the database.
    */
-  public Boolean checkIfEmailExist(String email) {
+  public Employee emailExist(String email) {
     ResultSet rs = null;
     StringBuilder query = new StringBuilder();
+    Employee employee = new Employee();
 
     query.append("SELECT ");
     query.append("    EMAIL ");
@@ -252,7 +252,9 @@ public class EmployeeDao {
       rs = preparedStatement.executeQuery();
 
       if (rs.next()) {
-        return true;
+        employee.setEmail(rs.getString("EMAIL"));
+      } else {
+        employee.setEmail(" ");
       }
 
       preparedStatement.close();
@@ -261,7 +263,7 @@ public class EmployeeDao {
       e.printStackTrace();
     }
 
-    return false;
+    return employee;
   }
 
   /** Performs a query that will add
@@ -272,7 +274,7 @@ public class EmployeeDao {
     Date hireDate = new Date();
 
     try {
-      hireDate = new SimpleDateFormat("MM/dd/yyyy").parse(employee.gethireDate());
+      hireDate = new SimpleDateFormat("yyyy/MM/dd").parse(employee.gethireDate());
     } catch (ParseException e) {
       e.printStackTrace();
     }
@@ -344,7 +346,7 @@ public class EmployeeDao {
     Date hireDate = new Date();
 
     try {
-      hireDate = new SimpleDateFormat("MM/dd/yyyy").parse(employee.gethireDate());
+      hireDate = new SimpleDateFormat("yyyy/MM/dd").parse(employee.gethireDate());
     } catch (ParseException e) {
       e.printStackTrace();
     }
@@ -445,13 +447,13 @@ public class EmployeeDao {
       query.append("      HIRE_DATE >= ");
       query.append("      TO_DATE(");
       query.append("      ?, ");
-      query.append("      'MM/DD/YYYY',");
+      query.append("      'YYYY/MM/DD',");
       query.append("      'NLS_DATE_LANGUAGE = American') ");
       query.append("  AND ");
       query.append("      HIRE_DATE <= ");
       query.append("      TO_DATE(");
       query.append("      ?, ");
-      query.append("      'MM/DD/YYYY',");
+      query.append("      'YYYY/MM/DD',");
       query.append("      'NLS_DATE_LANGUAGE = American')");
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
             && searchParams[3] == "" && searchParams[4] == "") {
@@ -466,21 +468,55 @@ public class EmployeeDao {
             && searchParams[3] == "" && searchParams[4] == "") {
       query.append("      EMAIL = ");
       query.append("      ?");
+    } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] == ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("      HIRE_DATE >= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] == ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("      HIRE_DATE <= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
     } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] == "" && searchParams[4] == "") {
       query.append("      FIRST_NAME = ");
-      query.append("      ?");
-      query.append("  AND");
+      query.append("      ? ");
+      query.append("  AND ");
       query.append("      LAST_NAME ");
       query.append("      LIKE ");
       query.append("      ? ");
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] == "") {
       query.append("      FIRST_NAME = ");
-      query.append("      ?");
-      query.append("  AND");
+      query.append("      ? ");
+      query.append("  AND ");
       query.append("      EMAIL = ");
       query.append("      ? ");
+    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("      FIRST_NAME = ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      HIRE_DATE >= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("      FIRST_NAME = ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      HIRE_DATE <= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] == "") {
       query.append("      LAST_NAME ");
@@ -489,117 +525,295 @@ public class EmployeeDao {
       query.append("  AND ");
       query.append("      EMAIL = ");
       query.append("      ?");
+    } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("      LAST_NAME ");
+      query.append("      LIKE ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      HIRE_DATE >= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("      LAST_NAME ");
+      query.append("      LIKE ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      HIRE_DATE <= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("      EMAIL = ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      HIRE_DATE >= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("      EMAIL = ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      HIRE_DATE <= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
     } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] == ""
             && searchParams[3] != "" && searchParams[4] != "") {
       query.append("      HIRE_DATE >= ");
       query.append("      TO_DATE(");
       query.append("      ?, ");
-      query.append("      'MM/DD/YYYY',");
+      query.append("      'YYYY/MM/DD',");
       query.append("      'NLS_DATE_LANGUAGE = American') ");
       query.append("  AND ");
       query.append("      HIRE_DATE <= ");
       query.append("      TO_DATE(");
       query.append("      ?, ");
-      query.append("      'MM/DD/YYYY',");
+      query.append("      'YYYY/MM/DD',");
       query.append("      'NLS_DATE_LANGUAGE = American')");
     } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] == "") {
       query.append("      FIRST_NAME = ");
-      query.append("      ?");
-      query.append("  AND");
+      query.append("      ? ");
+      query.append("  AND ");
       query.append("      LAST_NAME ");
       query.append("      LIKE ");
       query.append("      ? ");
-      query.append("  AND");
+      query.append("  AND ");
       query.append("      EMAIL = ");
       query.append("      ?");
-    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
-            && searchParams[3] != "" && searchParams[4] != "") {
+    } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
+            && searchParams[3] != "" && searchParams[4] == "") {
       query.append("      FIRST_NAME = ");
-      query.append("      ?");
-      query.append("  AND");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      LAST_NAME ");
+      query.append("      LIKE ");
+      query.append("      ? ");
+      query.append("  AND ");
       query.append("      HIRE_DATE >= ");
       query.append("      TO_DATE(");
       query.append("      ?, ");
-      query.append("      'MM/DD/YYYY',");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("      FIRST_NAME = ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      LAST_NAME ");
+      query.append("      LIKE ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      HIRE_DATE <= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("      FIRST_NAME = ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      EMAIL = ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      HIRE_DATE >= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("      FIRST_NAME = ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      EMAIL = ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      HIRE_DATE <= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
+            && searchParams[3] != "" && searchParams[4] != "") {
+      query.append("      FIRST_NAME = ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      HIRE_DATE >= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
       query.append("      'NLS_DATE_LANGUAGE = American') ");
       query.append("  AND ");
       query.append("      HIRE_DATE <= ");
       query.append("      TO_DATE(");
       query.append("      ?, ");
-      query.append("      'MM/DD/YYYY',");
+      query.append("      'YYYY/MM/DD',");
       query.append("      'NLS_DATE_LANGUAGE = American')");
+    } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] != "" && searchParams[4] != "") {
       query.append("    LAST_NAME ");
       query.append("    LIKE ");
       query.append("    ? ");
-      query.append("AND");
+      query.append("AND ");
       query.append("    HIRE_DATE >= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American') ");
       query.append("AND ");
       query.append("    HIRE_DATE <= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American')");
     } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] != "" && searchParams[4] != "") {
       query.append("    EMAIL = ");
       query.append("    ? ");
-      query.append("AND");
+      query.append("AND ");
       query.append("    HIRE_DATE >= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American') ");
       query.append("AND ");
       query.append("    HIRE_DATE <= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American')");
+    } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("    FIRST_NAME = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("    FIRST_NAME = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
     } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] != "" && searchParams[4] != "") {
       query.append("      FIRST_NAME = ");
       query.append("      ? ");
-      query.append("  AND");
+      query.append("  AND ");
       query.append("      LAST_NAME ");
       query.append("      LIKE ");
       query.append("      ? ");
-      query.append("  AND");
+      query.append("  AND ");
       query.append("      HIRE_DATE >= ");
       query.append("      TO_DATE(");
       query.append("      ?, ");
-      query.append("      'MM/DD/YYYY',");
+      query.append("      'YYYY/MM/DD',");
       query.append("      'NLS_DATE_LANGUAGE = American') ");
       query.append("  AND ");
       query.append("      HIRE_DATE <= ");
       query.append("      TO_DATE(");
       query.append("      ?, ");
-      query.append("      'MM/DD/YYYY',");
+      query.append("      'YYYY/MM/DD',");
       query.append("      'NLS_DATE_LANGUAGE = American')");
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] != "" && searchParams[4] != "") {
       query.append("      FIRST_NAME = ");
       query.append("      ? ");
-      query.append("  AND");
+      query.append("  AND ");
       query.append("      EMAIL = ");
       query.append("      ? ");
       query.append("  AND");
       query.append("      HIRE_DATE >= ");
       query.append("      TO_DATE(");
       query.append("      ?, ");
-      query.append("      'MM/DD/YYYY',");
+      query.append("      'YYYY/MM/DD',");
       query.append("      'NLS_DATE_LANGUAGE = American') ");
       query.append("  AND ");
       query.append("      HIRE_DATE <= ");
       query.append("      TO_DATE(");
       query.append("      ?, ");
-      query.append("      'MM/DD/YYYY',");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American')");
+    } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
+            && searchParams[3] != "" && searchParams[4] != "") {
+      query.append("      LAST_NAME ");
+      query.append("      LIKE ");
+      query.append("      ? ");
+      query.append("  AND ");
+      query.append("      EMAIL = ");
+      query.append("      ? ");
+      query.append("  AND");
+      query.append("      HIRE_DATE >= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
+      query.append("      'NLS_DATE_LANGUAGE = American') ");
+      query.append("  AND ");
+      query.append("      HIRE_DATE <= ");
+      query.append("      TO_DATE(");
+      query.append("      ?, ");
+      query.append("      'YYYY/MM/DD',");
       query.append("      'NLS_DATE_LANGUAGE = American')");
     }
 
@@ -629,55 +843,89 @@ public class EmployeeDao {
     query.append("WHERE ");
     if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
             && searchParams[3] != "" && searchParams[4] != "") {
-      query.append("  FIRST_NAME = ");
+      query.append("    FIRST_NAME = ");
       query.append("    ? ");
       query.append("AND ");
-      query.append("  LAST_NAME ");
-      query.append("  LIKE ");
-      query.append("  ? ");
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
       query.append("AND ");
-      query.append("  EMAIL = ");
-      query.append("  ? ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
       query.append("AND ");
-      query.append("  HIRE_DATE >= ");
-      query.append("  TO_DATE(");
-      query.append("  ?, ");
-      query.append("  'MM/DD/YYYY',");
-      query.append("  'NLS_DATE_LANGUAGE = American') ");
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
       query.append("AND ");
-      query.append("  HIRE_DATE <= ");
-      query.append("  TO_DATE(");
-      query.append("  ?, ");
-      query.append("  'MM/DD/YYYY',");
-      query.append("  'NLS_DATE_LANGUAGE = American') ");
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American')");
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
             && searchParams[3] == "" && searchParams[4] == "") {
       query.append("    FIRST_NAME = ");
-      query.append("    ? ");
+      query.append("    ?");
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
               && searchParams[3] == "" && searchParams[4] == "") {
       query.append("    LAST_NAME ");
       query.append("    LIKE ");
-      query.append("    ?");
+      query.append("    ? ");
     } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] == "") {
       query.append("    EMAIL = ");
-      query.append("    ? ");
+      query.append("    ?");
+    } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] == ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] == ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
     } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] == "" && searchParams[4] == "") {
       query.append("    FIRST_NAME = ");
-      query.append("    ?");
-      query.append("AND");
+      query.append("    ? ");
+      query.append("AND ");
       query.append("    LAST_NAME ");
       query.append("    LIKE ");
       query.append("    ? ");
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] == "") {
       query.append("    FIRST_NAME = ");
-      query.append("    ?");
-      query.append("AND");
+      query.append("    ? ");
+      query.append("AND ");
       query.append("    EMAIL = ");
       query.append("    ? ");
+    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("    FIRST_NAME = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("    FIRST_NAME = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] == "") {
       query.append("    LAST_NAME ");
@@ -686,117 +934,295 @@ public class EmployeeDao {
       query.append("AND ");
       query.append("    EMAIL = ");
       query.append("    ?");
+    } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
     } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] == ""
             && searchParams[3] != "" && searchParams[4] != "") {
       query.append("    HIRE_DATE >= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American') ");
       query.append("AND ");
       query.append("    HIRE_DATE <= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
-      query.append("    'NLS_DATE_LANGUAGE = American') ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American')");
     } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] == "") {
       query.append("    FIRST_NAME = ");
-      query.append("    ?");
-      query.append("AND");
+      query.append("    ? ");
+      query.append("AND ");
       query.append("    LAST_NAME ");
       query.append("    LIKE ");
       query.append("    ? ");
-      query.append("AND");
+      query.append("AND ");
       query.append("    EMAIL = ");
       query.append("    ?");
-    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
-            && searchParams[3] != "" && searchParams[4] != "") {
+    } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
+            && searchParams[3] != "" && searchParams[4] == "") {
       query.append("    FIRST_NAME = ");
-      query.append("    ?");
-      query.append("AND");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
       query.append("    HIRE_DATE >= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("    FIRST_NAME = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("    FIRST_NAME = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("    FIRST_NAME = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
+            && searchParams[3] != "" && searchParams[4] != "") {
+      query.append("    FIRST_NAME = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American') ");
       query.append("AND ");
       query.append("    HIRE_DATE <= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American')");
+    } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] != "" && searchParams[4] != "") {
       query.append("    LAST_NAME ");
       query.append("    LIKE ");
       query.append("    ? ");
-      query.append("AND");
+      query.append("AND ");
       query.append("    HIRE_DATE >= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American') ");
       query.append("AND ");
       query.append("    HIRE_DATE <= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American')");
     } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] != "" && searchParams[4] != "") {
       query.append("    EMAIL = ");
       query.append("    ? ");
-      query.append("AND");
+      query.append("AND ");
       query.append("    HIRE_DATE >= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American') ");
       query.append("AND ");
       query.append("    HIRE_DATE <= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American')");
+    } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
+            && searchParams[3] != "" && searchParams[4] == "") {
+      query.append("    FIRST_NAME = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+    } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
+            && searchParams[3] == "" && searchParams[4] != "") {
+      query.append("    FIRST_NAME = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
     } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] != "" && searchParams[4] != "") {
       query.append("    FIRST_NAME = ");
       query.append("    ? ");
-      query.append("AND");
+      query.append("AND ");
       query.append("    LAST_NAME ");
       query.append("    LIKE ");
       query.append("    ? ");
-      query.append("AND");
+      query.append("AND ");
       query.append("    HIRE_DATE >= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American') ");
       query.append("AND ");
       query.append("    HIRE_DATE <= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American')");
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] != "" && searchParams[4] != "") {
       query.append("    FIRST_NAME = ");
       query.append("    ? ");
-      query.append("AND");
+      query.append("AND ");
       query.append("    EMAIL = ");
       query.append("    ? ");
       query.append("AND");
       query.append("    HIRE_DATE >= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American') ");
       query.append("AND ");
       query.append("    HIRE_DATE <= ");
       query.append("    TO_DATE(");
       query.append("    ?, ");
-      query.append("    'MM/DD/YYYY',");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American')");
+    } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
+            && searchParams[3] != "" && searchParams[4] != "") {
+      query.append("    LAST_NAME ");
+      query.append("    LIKE ");
+      query.append("    ? ");
+      query.append("AND ");
+      query.append("    EMAIL = ");
+      query.append("    ? ");
+      query.append("AND");
+      query.append("    HIRE_DATE >= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
+      query.append("    'NLS_DATE_LANGUAGE = American') ");
+      query.append("AND ");
+      query.append("    HIRE_DATE <= ");
+      query.append("    TO_DATE(");
+      query.append("    ?, ");
+      query.append("    'YYYY/MM/DD',");
       query.append("    'NLS_DATE_LANGUAGE = American')");
     }
     query.append("ORDER BY ");
@@ -836,12 +1262,15 @@ public class EmployeeDao {
         preparedStatement.setString(2, searchParams[2]);
         preparedStatement.setInt(3, (page - 10));
       } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] == ""
-              && searchParams[3] != "" && searchParams[4] != "") {
+              && searchParams[3] != "" && searchParams[4] == "") {
         preparedStatement.setString(1, searchParams[3]);
+        preparedStatement.setString(2, searchParams[3]);
+        preparedStatement.setInt(3, (page - 10));
+      } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] == ""
+              && searchParams[3] == "" && searchParams[4] != "") {
+        preparedStatement.setString(1, searchParams[4]);
         preparedStatement.setString(2, searchParams[4]);
-        preparedStatement.setString(3, searchParams[3]);
-        preparedStatement.setString(4, searchParams[4]);
-        preparedStatement.setInt(5, (page - 10));
+        preparedStatement.setInt(3, (page - 10));
       } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
               && searchParams[3] == "" && searchParams[4] == "") {
         preparedStatement.setString(1, searchParams[0]);
@@ -856,12 +1285,61 @@ public class EmployeeDao {
         preparedStatement.setString(3, searchParams[0]);
         preparedStatement.setString(4, searchParams[2]);
         preparedStatement.setInt(5, (page - 10));
+      } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
+              && searchParams[3] != "" && searchParams[4] == "") {
+        preparedStatement.setString(1, searchParams[0]);
+        preparedStatement.setString(2, searchParams[3]);
+        preparedStatement.setString(3, searchParams[0]);
+        preparedStatement.setString(4, searchParams[3]);
+        preparedStatement.setInt(5, (page - 10));
+      } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
+              && searchParams[3] == "" && searchParams[4] != "") {
+        preparedStatement.setString(1, searchParams[0]);
+        preparedStatement.setString(2, searchParams[4]);
+        preparedStatement.setString(3, searchParams[0]);
+        preparedStatement.setString(4, searchParams[4]);
+        preparedStatement.setInt(5, (page - 10));
       } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
               && searchParams[3] == "" && searchParams[4] == "") {
         preparedStatement.setString(1, searchParams[1] + wildcard);
         preparedStatement.setString(2, searchParams[2]);
         preparedStatement.setString(3, searchParams[1] + wildcard);
         preparedStatement.setString(4, searchParams[2]);
+        preparedStatement.setInt(5, (page - 10));
+      } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
+              && searchParams[3] != "" && searchParams[4] == "") {
+        preparedStatement.setString(1, searchParams[1] + wildcard);
+        preparedStatement.setString(2, searchParams[3]);
+        preparedStatement.setString(3, searchParams[1] + wildcard);
+        preparedStatement.setString(4, searchParams[3]);
+        preparedStatement.setInt(5, (page - 10));
+      } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
+              && searchParams[3] == "" && searchParams[4] != "") {
+        preparedStatement.setString(1, searchParams[1] + wildcard);
+        preparedStatement.setString(2, searchParams[4]);
+        preparedStatement.setString(3, searchParams[1] + wildcard);
+        preparedStatement.setString(4, searchParams[4]);
+        preparedStatement.setInt(5, (page - 10));
+      } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
+              && searchParams[3] != "" && searchParams[4] == "") {
+        preparedStatement.setString(1, searchParams[2]);
+        preparedStatement.setString(2, searchParams[3]);
+        preparedStatement.setString(3, searchParams[2]);
+        preparedStatement.setString(4, searchParams[3]);
+        preparedStatement.setInt(5, (page - 10));
+      } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
+              && searchParams[3] == "" && searchParams[4] != "") {
+        preparedStatement.setString(1, searchParams[2]);
+        preparedStatement.setString(2, searchParams[4]);
+        preparedStatement.setString(3, searchParams[2]);
+        preparedStatement.setString(4, searchParams[4]);
+        preparedStatement.setInt(5, (page - 10));
+      } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] == ""
+              && searchParams[3] != "" && searchParams[4] != "") {
+        preparedStatement.setString(1, searchParams[3]);
+        preparedStatement.setString(2, searchParams[4]);
+        preparedStatement.setString(3, searchParams[3]);
+        preparedStatement.setString(4, searchParams[4]);
         preparedStatement.setInt(5, (page - 10));
       } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
               && searchParams[3] == "" && searchParams[4] == "") {
@@ -872,6 +1350,42 @@ public class EmployeeDao {
         preparedStatement.setString(5, searchParams[1] + wildcard);
         preparedStatement.setString(6, searchParams[2]);
         preparedStatement.setInt(7, (page - 10));
+      } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
+              && searchParams[3] != "" && searchParams[4] == "") {
+        preparedStatement.setString(1, searchParams[0]);
+        preparedStatement.setString(2, searchParams[1] + wildcard);
+        preparedStatement.setString(3, searchParams[3]);
+        preparedStatement.setString(4, searchParams[0]);
+        preparedStatement.setString(5, searchParams[1] + wildcard);
+        preparedStatement.setString(6, searchParams[3]);
+        preparedStatement.setInt(7, (page - 10));
+      } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
+              && searchParams[3] == "" && searchParams[4] != "") {
+        preparedStatement.setString(1, searchParams[0]);
+        preparedStatement.setString(2, searchParams[1] + wildcard);
+        preparedStatement.setString(3, searchParams[4]);
+        preparedStatement.setString(4, searchParams[0]);
+        preparedStatement.setString(5, searchParams[1] + wildcard);
+        preparedStatement.setString(6, searchParams[4]);
+        preparedStatement.setInt(7, (page - 10));
+      } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
+              && searchParams[3] != "" && searchParams[4] == "") {
+        preparedStatement.setString(1, searchParams[0]);
+        preparedStatement.setString(2, searchParams[2]);
+        preparedStatement.setString(3, searchParams[3]);
+        preparedStatement.setString(4, searchParams[0]);
+        preparedStatement.setString(5, searchParams[2]);
+        preparedStatement.setString(6, searchParams[3]);
+        preparedStatement.setInt(7, (page - 10));
+      } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
+              && searchParams[3] == "" && searchParams[4] != "") {
+        preparedStatement.setString(1, searchParams[0]);
+        preparedStatement.setString(2, searchParams[2]);
+        preparedStatement.setString(3, searchParams[4]);
+        preparedStatement.setString(4, searchParams[0]);
+        preparedStatement.setString(5, searchParams[2]);
+        preparedStatement.setString(6, searchParams[4]);
+        preparedStatement.setInt(7, (page - 10));
       } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
               && searchParams[3] != "" && searchParams[4] != "") {
         preparedStatement.setString(1, searchParams[0]);
@@ -879,6 +1393,24 @@ public class EmployeeDao {
         preparedStatement.setString(3, searchParams[4]);
         preparedStatement.setString(4, searchParams[0]);
         preparedStatement.setString(5, searchParams[3]);
+        preparedStatement.setString(6, searchParams[4]);
+        preparedStatement.setInt(7, (page - 10));
+      } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
+              && searchParams[3] != "" && searchParams[4] == "") {
+        preparedStatement.setString(1, searchParams[1] + wildcard);
+        preparedStatement.setString(2, searchParams[2]);
+        preparedStatement.setString(3, searchParams[3]);
+        preparedStatement.setString(4, searchParams[1] + wildcard);
+        preparedStatement.setString(5, searchParams[2]);
+        preparedStatement.setString(6, searchParams[3]);
+        preparedStatement.setInt(7, (page - 10));
+      } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
+              && searchParams[3] == "" && searchParams[4] != "") {
+        preparedStatement.setString(1, searchParams[1] + wildcard);
+        preparedStatement.setString(2, searchParams[2]);
+        preparedStatement.setString(3, searchParams[4]);
+        preparedStatement.setString(4, searchParams[1] + wildcard);
+        preparedStatement.setString(5, searchParams[2]);
         preparedStatement.setString(6, searchParams[4]);
         preparedStatement.setInt(7, (page - 10));
       } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
@@ -899,6 +1431,28 @@ public class EmployeeDao {
         preparedStatement.setString(5, searchParams[3]);
         preparedStatement.setString(6, searchParams[4]);
         preparedStatement.setInt(7, (page - 10));
+      } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
+              && searchParams[3] != "" && searchParams[4] == "") {
+        preparedStatement.setString(1, searchParams[0]);
+        preparedStatement.setString(2, searchParams[1] + wildcard);
+        preparedStatement.setString(3, searchParams[2]);
+        preparedStatement.setString(4, searchParams[3]);
+        preparedStatement.setString(5, searchParams[0]);
+        preparedStatement.setString(6, searchParams[1] + wildcard);
+        preparedStatement.setString(7, searchParams[2]);
+        preparedStatement.setString(8, searchParams[3]);
+        preparedStatement.setInt(9, (page - 10));
+      } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
+              && searchParams[3] == "" && searchParams[4] != "") {
+        preparedStatement.setString(1, searchParams[0]);
+        preparedStatement.setString(2, searchParams[1] + wildcard);
+        preparedStatement.setString(3, searchParams[2]);
+        preparedStatement.setString(4, searchParams[4]);
+        preparedStatement.setString(5, searchParams[0]);
+        preparedStatement.setString(6, searchParams[1] + wildcard);
+        preparedStatement.setString(7, searchParams[2]);
+        preparedStatement.setString(8, searchParams[4]);
+        preparedStatement.setInt(9, (page - 10));
       } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
               && searchParams[3] != "" && searchParams[4] != "") {
         preparedStatement.setString(1, searchParams[0]);
@@ -917,6 +1471,17 @@ public class EmployeeDao {
         preparedStatement.setString(3, searchParams[3]);
         preparedStatement.setString(4, searchParams[4]);
         preparedStatement.setString(5, searchParams[0]);
+        preparedStatement.setString(6, searchParams[2]);
+        preparedStatement.setString(7, searchParams[3]);
+        preparedStatement.setString(8, searchParams[4]);
+        preparedStatement.setInt(9, (page - 10));
+      } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
+              && searchParams[3] != "" && searchParams[4] != "") {
+        preparedStatement.setString(1, searchParams[1] + wildcard);
+        preparedStatement.setString(2, searchParams[2]);
+        preparedStatement.setString(3, searchParams[3]);
+        preparedStatement.setString(4, searchParams[4]);
+        preparedStatement.setString(5, searchParams[1] + wildcard);
         preparedStatement.setString(6, searchParams[2]);
         preparedStatement.setString(7, searchParams[3]);
         preparedStatement.setString(8, searchParams[4]);

@@ -53,7 +53,6 @@
 					<button name="AddEmployee" id="addButton" type="button">Add New Employee</button>
 				</div>
 			</form>
-			<c:remove var="searchValues" scope="session" />
 			<c:if test="${fn:length(sessionScope.errors) gt 0}">
 				<ul>
 					<c:forEach items="${sessionScope.errors}" var="error">
@@ -157,5 +156,8 @@
 	<p id="border_endDate" class="hidden">
 		<c:out value="${sessionScope.numErrors[4]}" />
 	</p>
+	<c:remove var="numErrors" scope="session" />
+	<c:remove var="searchValues" scope="session" />
+	<c:remove var="errors" scope="session" />
 </body>
 </html>

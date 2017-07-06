@@ -34,10 +34,10 @@
 				<label>First Name</label>
 				<c:choose>
 					<c:when test="${not empty sessionScope.old}">
-						<input type="text" name="FirstName" value='<c:out value="${sessionScope.old[1]}" />'>
+						<input type="text" id="FirstName" name="FirstName" value='<c:out value="${sessionScope.old[1]}" />'>
 					</c:when>
 					<c:otherwise>
-						<input type="text" name="FirstName" value='<c:out value="${employee.firstName}" />'>
+						<input type="text" id="FirstName" name="FirstName" value='<c:out value="${employee.firstName}" />'>
 					</c:otherwise>
 				</c:choose>
 			</div>
@@ -46,10 +46,10 @@
 				<label>Last Name</label>
 				<c:choose>
 					<c:when test="${not empty sessionScope.old}">
-						<input type="text" name="LastName" value='<c:out value="${sessionScope.old[2]}" />'>
+						<input type="text" id="LastName" name="LastName" value='<c:out value="${sessionScope.old[2]}" />'>
 					</c:when>
 					<c:otherwise>
-						<input type="text" name="LastName" value='<c:out value="${employee.lastName}" />'>
+						<input type="text" id="LastName" name="LastName" value='<c:out value="${employee.lastName}" />'>
 					</c:otherwise>
 				</c:choose>
 			</div>
@@ -58,10 +58,10 @@
 				<label>Email</label>
 				<c:choose>
 					<c:when test="${not empty sessionScope.old}">
-						<input type="text" name="Email" value='<c:out value="${sessionScope.old[3]}" />'>
+						<input type="text" id="Email" name="Email" value='<c:out value="${sessionScope.old[3]}" />'>
 					</c:when>
 					<c:otherwise>
-						<input type="text" name="Email" value='<c:out value="${employee.email}" />'>
+						<input type="text" id="Email" name="Email" value='<c:out value="${employee.email}" />'>
 					</c:otherwise>
 				</c:choose>
 			</div>
@@ -70,10 +70,10 @@
 				<label>Phone</label>
 				<c:choose>
 					<c:when test="${not empty sessionScope.old}">
-						<input type="text" name="Phone" value='<c:out value="${sessionScope.old[4]}" />'>
+						<input type="text" id="Phone" name="Phone" value='<c:out value="${sessionScope.old[4]}" />'>
 					</c:when>
 					<c:otherwise>
-						<input type="text" name="Phone" value='<c:out value="${employee.phone}" />'>
+						<input type="text" id="Phone" name="Phone" value='<c:out value="${employee.phone}" />'>
 					</c:otherwise>
 				</c:choose>
 			</div>
@@ -113,10 +113,10 @@
 				<label>Salary</label>
 				<c:choose>
 					<c:when test="${not empty sessionScope.old}">
-						<input type="text" name="Salary" value='<c:out value="${sessionScope.old[7]}" />'>
+						<input type="text" id="Salary" name="Salary" value='<c:out value="${sessionScope.old[7]}" />'>
 					</c:when>
 					<c:otherwise>
-						<input type="text" name="Salary" value='<c:out value="${employee.salary}" />'>
+						<input type="text" id="Salary" name="Salary" value='<c:out value="${employee.salary}" />'>
 					</c:otherwise>
 				</c:choose>
 			</div>
@@ -125,13 +125,13 @@
 				<label>Commission</label>
 				<c:choose>
 					<c:when test="${not empty sessionScope.old}">
-						<input type="text" name="Commission" id="commission" readonly="" value='<c:out value="${sessionScope.old[8]}" />'>
+						<input type="text" name="Commission" id="Commission" readonly="" value='<c:out value="${sessionScope.old[8]}" />'>
 					</c:when>
-					<c:when test="${employee.department == 'Sales'}">
-						<input type="text" name="Commission" id="commission" readonly="" value='<c:out value="${employee.commission}" />'>
+					<c:when test="${employee.department == 'Sales' && employee.commission != 0}">
+						<input type="text" name="Commission" id="Commission" readonly="" value='<c:out value="${employee.commission}" />'>
 					</c:when>
 					<c:otherwise>
-						<input type="text" name="Commission" id="commission" readonly="" value="">
+						<input type="text" name="Commission" id="Commission" readonly="" value="">
 					</c:otherwise>
 				</c:choose>
 			</div>
@@ -167,36 +167,37 @@
 			</div>
 		</form>
 		<p id="border_firstName" class="hidden">
-			<c:out value="${numErrors[0]}" />
+			<c:out value="${sessionScope.numErrors[0]}" />
 		</p>
 		<p id="border_lastName" class="hidden">
-			<c:out value="${numErrors[1]}" />
+			<c:out value="${sessionScope.numErrors[1]}" />
 		</p>
 		<p id="border_email" class="hidden">
-			<c:out value="${numErrors[2]}" />
+			<c:out value="${sessionScope.numErrors[2]}" />
 		</p>
-		<p id="border_startDate" class="hidden">
-			<c:out value="${numErrors[3]}" />
+		<p id="border_phone" class="hidden">
+			<c:out value="${sessionScope.numErrors[3]}" />
 		</p>
-		<p id="border_endDate" class="hidden">
-			<c:out value="${numErrors[4]}" />
+		<p id="border_hireDate" class="hidden">
+			<c:out value="${sessionScope.numErrors[4]}" />
 		</p>
-		<p id="border_firstName" class="hidden">
-			<c:out value="${numErrors[5]}" />
+		<p id="border_selectJob" class="hidden">
+			<c:out value="${sessionScope.numErrors[5]}" />
 		</p>
-		<p id="border_lastName" class="hidden">
-			<c:out value="${numErrors[6]}" />
+		<p id="border_salary" class="hidden">
+			<c:out value="${sessionScope.numErrors[6]}" />
 		</p>
-		<p id="border_email" class="hidden">
-			<c:out value="${numErrors[7]}" />
+		<p id="border_commission" class="hidden">
+			<c:out value="${sessionScope.numErrors[7]}" />
 		</p>
-		<p id="border_startDate" class="hidden">
-			<c:out value="${numErrors[8]}" />
+		<p id="border_selectDept" class="hidden">
+			<c:out value="${sessionScope.numErrors[8]}" />
 		</p>
-		<p id="border_endDate" class="hidden">
-			<c:out value="${numErrors[9]}" />
+		<p id="border_manager" class="hidden">
+			<c:out value="${sessionScope.numErrors[9]}" />
 		</p>
 		<c:remove var="old" scope="session" />
+		<c:remove var="numErrors" scope="session" />
 	</div>
 </body>
 </html>

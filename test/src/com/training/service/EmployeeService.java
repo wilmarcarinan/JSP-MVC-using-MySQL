@@ -55,6 +55,7 @@ public class EmployeeService {
     employee.setCommission(commission);
     employee.setDepartment(params[9]);
     employee.setManagerId(Integer.parseInt(params[10]));
+    employee.setManager(params[11]);
 
     empDao.addEmployeeQuery(employee);
   }
@@ -88,8 +89,8 @@ public class EmployeeService {
   /** Interact with the DAO layer and
    *  return true if email exist.
    */
-  public Boolean emailExist(String email) {
-    if (empDao.checkIfEmailExist(email)) {
+  public Boolean isEmailExist(String email) {
+    if (empDao.emailExist(email).getEmail().equals(email)) {
       return true;
     } else {
       return false;
@@ -135,12 +136,12 @@ public class EmployeeService {
       numErrors[2] = 1;
     }
 
-    if (errors.contains(Constants.FORMAT_STARTDATE) || errors.contains(Constants.HIREDATE_ERROR)
+    if (errors.contains(Constants.FORMAT_STARTDATE)
         || errors.contains(Constants.COMPAREDATE_ERROR)) {
       numErrors[3] = 1;
     }
 
-    if (errors.contains(Constants.FORMAT_ENDDATE) || errors.contains(Constants.HIREDATE_ERROR)
+    if (errors.contains(Constants.FORMAT_ENDDATE)
         || errors.contains(Constants.COMPAREDATE_ERROR)) {
       numErrors[4] = 1;
     }
@@ -195,33 +196,27 @@ public class EmployeeService {
       if (!validate.checkIfDate(searchParams[3])) {
         errors.add(Constants.FORMAT_STARTDATE);
       }
-
-      if (searchParams[4] == "") {
-        errors.add(Constants.HIREDATE_ERROR);
-      } else {
-        if (!validate.compareDate(searchParams[3], searchParams[4])) {
-          errors.add(Constants.COMPAREDATE_ERROR);
-        }
-      }
     }
 
     if (searchParams[4] != "") {
       if (!validate.checkIfDate(searchParams[4])) {
         errors.add(Constants.FORMAT_ENDDATE);
       }
+    }
 
-      if (searchParams[3] == "") {
-        errors.add(Constants.HIREDATE_ERROR);
+    if (searchParams[3] != "" && searchParams[4] != "") {
+      if (!validate.compareDate(searchParams[3], searchParams[4])) {
+        errors.add(Constants.COMPAREDATE_ERROR);
       }
     }
 
     return errors;
   }
 
-  /**
-   * .
+  /** Returns the array of error status that will determine
+   *  if a text field must be bordered by red color.
    */
-  public int[] addErrStatus(List<String> errors) {
+  public int[] addErrStatus(List<String> errors, String jobTitle) {
     int[] numErrors = new int[10];
 
     for (int i = 0; i < numErrors.length; i++) {
@@ -250,7 +245,8 @@ public class EmployeeService {
     }
 
     if (errors.contains(Constants.PHONE_HALFWIDTH)
-        || errors.contains(Constants.STRINGLENGTH_PHONE)) {
+        || errors.contains(Constants.STRINGLENGTH_PHONE)
+        || errors.contains(Constants.PHONE_NOTVALID)) {
       numErrors[3] = 1;
     }
 
@@ -266,7 +262,10 @@ public class EmployeeService {
     }
 
     if (errors.contains(Constants.SALARY_REQUIRED)
-        || errors.contains(Constants.FORMAT_SALARY)) {
+        || errors.contains(Constants.FORMAT_SALARY)
+        || errors.contains("Enter SALARY from " + convert.formatDecimal(jobService.getJob(jobTitle)
+                .getminSalary()) + " to " + convert.formatDecimal(jobService.getJob(jobTitle)
+                        .getmaxSalary()))) {
       numErrors[6] = 1;
     }
 
@@ -293,13 +292,12 @@ public class EmployeeService {
     if (addParams[1] != "" && addParams[2] != "" && addParams[3] != "" && addParams[5] != ""
         && addParams[6] != "" && addParams[7] != "" && addParams[9] != ""
         && addParams[10] != "" && addParams[11] != "") {
-      if ((validate.checkIf20Chars(addParams[1]) && validate.checkIfNotAlphaNum(addParams[1])
-            && validate.isHalfWidth(addParams[1]))
-            && (validate.checkIf25Chars(addParams[2]) && validate.checkIfNotAlphaNum(addParams[2])
-            && validate.isHalfWidth(addParams[2]))
+      if ((validate.checkIf20Chars(addParams[1]) && validate.checkIfNotAlphaNum(addParams[1]))
+            && (validate.checkIf25Chars(addParams[2]) && validate.checkIfNotAlphaNum(addParams[2]))
             && (validate.checkIfEmail(addParams[3]) && validate.checkIf25Chars(addParams[3]))
             && (((addParams[4] != "") && validate.checkIf20Chars(addParams[4])
-                && validate.phoneIsHalfWidth(addParams[4])) || (addParams[4] == ""))
+                && validate.phoneIsHalfWidth(addParams[4]) && validate.phoneIsValid(addParams[4]))
+                || (addParams[4] == ""))
             && (validate.checkIfDate(addParams[5]) && validate.validDate(addParams[5]))
             && validate.jobExist(addParams[6])
             && (validate.checkIfTwoDecimal(addParams[7])
@@ -358,7 +356,7 @@ public class EmployeeService {
     if (!validate.checkIf25Chars(params[3])) {
       errors.add(Constants.STRINGLENGTH_EMAIL);
     } else if (!params[3].equals(oldEmail)) {
-      if (emailExist(params[3])) {
+      if (isEmailExist(params[3])) {
         errors.add(Constants.EMAIL_EXIST);
       }
     }
@@ -369,6 +367,10 @@ public class EmployeeService {
 
     if (!validate.phoneIsHalfWidth(params[4])) {
       errors.add(Constants.PHONE_HALFWIDTH);
+    }
+
+    if (!validate.phoneIsValid(params[4])) {
+      errors.add(Constants.PHONE_NOTVALID);
     }
 
     if (params[5].equals("")) {
@@ -389,7 +391,7 @@ public class EmployeeService {
       errors.add(Constants.SALARY_REQUIRED);
     } else if (!validate.checkIfTwoDecimal(params[7])) {
       errors.add(Constants.FORMAT_SALARY);
-    } else if (!validate.salaryInRange(params[7], params[6])) {
+    } else if (!validate.salaryInRange(params[7], params[6]) && validate.jobExist(params[6])) {
       errors.add("Enter SALARY from " + convert.formatDecimal(jobService.getJob(params[6])
           .getminSalary()) + " to " + convert.formatDecimal(jobService.getJob(params[6])
           .getmaxSalary()));
@@ -411,6 +413,10 @@ public class EmployeeService {
     if (params[10].equals("") || params[11].equals("")) {
       errors.add(Constants.MANAGER_REQUIRED);
     }
+
+    //if (!deptService.isManagerOfDepartment(params[10], params[9])) {
+    //  errors.add(Constants.NOTMANAGER_OFDEPT);
+    //}
     return errors;
   }
 
@@ -421,14 +427,14 @@ public class EmployeeService {
     if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
             && searchParams[3] != "" && searchParams[4] != "") {
       if (validate.checkIfNotAlphaNum(searchParams[0])
-              && validate.checkIfNotAlphaNum(searchParams[1])
-              && validate.checkIf20Chars(searchParams[0])
-              && validate.checkIf25Chars(searchParams[1])
-              && validate.checkIf25Chars(searchParams[2])
-              && validate.checkIfEmail(searchParams[2])
-              && validate.checkIfDate(searchParams[3])
-              && validate.checkIfDate(searchParams[4])
-              && validate.compareDate(searchParams[3], searchParams[4])) {
+            && validate.checkIfNotAlphaNum(searchParams[1])
+            && validate.checkIf20Chars(searchParams[0])
+            && validate.checkIf25Chars(searchParams[1])
+            && validate.checkIf25Chars(searchParams[2])
+            && validate.checkIfEmail(searchParams[2])
+            && validate.checkIfDate(searchParams[3])
+            && validate.checkIfDate(searchParams[4])
+            && validate.compareDate(searchParams[3], searchParams[4])) {
         return true;
       } else {
         return false;
@@ -436,7 +442,7 @@ public class EmployeeService {
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
             && searchParams[3] == "" && searchParams[4] == "") {
       if (validate.checkIf20Chars(searchParams[0])
-          && validate.checkIfNotAlphaNum(searchParams[0])) {
+            && validate.checkIfNotAlphaNum(searchParams[0])) {
         return true;
       } else {
         return false;
@@ -444,30 +450,38 @@ public class EmployeeService {
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] == "" && searchParams[4] == "") {
       if (validate.checkIfNotAlphaNum(searchParams[1])
-          && validate.checkIf25Chars(searchParams[1])) {
+            && validate.checkIf25Chars(searchParams[1])) {
         return true;
       } else {
         return false;
       }
     } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
-              && searchParams[3] == "" && searchParams[4] == "") {
+            && searchParams[3] == "" && searchParams[4] == "") {
       if (validate.checkIf25Chars(searchParams[2]) && validate.checkIfEmail(searchParams[2])) {
         return true;
       } else {
         return false;
       }
     } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] == ""
-              && searchParams[3] != "" && searchParams[4] == "") {
-      return false;
+            && searchParams[3] != "" && searchParams[4] == "") {
+      if (validate.checkIfDate(searchParams[3])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] == ""
             && searchParams[3] == "" && searchParams[4] != "") {
-      return false;
+      if (validate.checkIfDate(searchParams[4])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] == "" && searchParams[4] == "") {
       if (validate.checkIfNotAlphaNum(searchParams[0])
-              && validate.checkIfNotAlphaNum(searchParams[1])
-              && validate.checkIf20Chars(searchParams[0])
-              && validate.checkIf25Chars(searchParams[1])) {
+            && validate.checkIfNotAlphaNum(searchParams[1])
+            && validate.checkIf20Chars(searchParams[0])
+            && validate.checkIf25Chars(searchParams[1])) {
         return true;
       } else {
         return false;
@@ -475,40 +489,64 @@ public class EmployeeService {
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] == "") {
       if (validate.checkIfNotAlphaNum(searchParams[0])
-                && validate.checkIfEmail(searchParams[2])
-                && validate.checkIf20Chars(searchParams[0])
-                && validate.checkIf25Chars(searchParams[2])) {
+            && validate.checkIfEmail(searchParams[2])
+            && validate.checkIf20Chars(searchParams[0])
+            && validate.checkIf25Chars(searchParams[2])) {
         return true;
       } else {
         return false;
       }
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
             && searchParams[3] != "" && searchParams[4] == "") {
-      return false;
+      if (validate.checkIfNotAlphaNum(searchParams[0])
+            && validate.checkIf20Chars(searchParams[0])
+            && validate.checkIfDate(searchParams[3])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
             && searchParams[3] == "" && searchParams[4] != "") {
-      return false;
+      if (validate.checkIfNotAlphaNum(searchParams[0])
+            && validate.checkIf20Chars(searchParams[0])
+            && validate.checkIfDate(searchParams[4])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] == "") {
       if (validate.checkIfNotAlphaNum(searchParams[1])
-          && validate.checkIf25Chars(searchParams[1])
-          && validate.checkIfEmail(searchParams[2])
-          && validate.checkIf25Chars(searchParams[2])) {
+            && validate.checkIf25Chars(searchParams[1])
+            && validate.checkIfEmail(searchParams[2])
+            && validate.checkIf25Chars(searchParams[2])) {
         return true;
       } else {
         return false;
       }
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] != "" && searchParams[4] == "") {
-      return false;
+      if (validate.checkIfNotAlphaNum(searchParams[1])
+            && validate.checkIf25Chars(searchParams[0])
+            && validate.checkIfDate(searchParams[3])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] == "" && searchParams[4] != "") {
-      return false;
+      if (validate.checkIfNotAlphaNum(searchParams[1])
+            && validate.checkIf25Chars(searchParams[0])
+            && validate.checkIfDate(searchParams[4])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] != "" && searchParams[4] == "") {
       if (validate.checkIfEmail(searchParams[2])
-                && validate.checkIf25Chars(searchParams[2])
-                && validate.checkIfDate(searchParams[3])) {
+            && validate.checkIf25Chars(searchParams[2])
+            && validate.checkIfDate(searchParams[3])) {
         return true;
       } else {
         return false;
@@ -516,8 +554,8 @@ public class EmployeeService {
     } else if (searchParams[0] == "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] != "") {
       if (validate.checkIfEmail(searchParams[2])
-                && validate.checkIf25Chars(searchParams[2])
-                && validate.checkIfDate(searchParams[4])) {
+            && validate.checkIf25Chars(searchParams[2])
+            && validate.checkIfDate(searchParams[4])) {
         return true;
       } else {
         return false;
@@ -533,27 +571,59 @@ public class EmployeeService {
     } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] == "") {
       if (validate.checkIfNotAlphaNum(searchParams[0])
-              && validate.checkIfNotAlphaNum(searchParams[1])
-              && validate.checkIf20Chars(searchParams[0])
-              && validate.checkIf25Chars(searchParams[1])
-              && validate.checkIf25Chars(searchParams[2])
-              && validate.checkIfEmail(searchParams[2])) {
+            && validate.checkIfNotAlphaNum(searchParams[1])
+            && validate.checkIf20Chars(searchParams[0])
+            && validate.checkIf25Chars(searchParams[1])
+            && validate.checkIf25Chars(searchParams[2])
+            && validate.checkIfEmail(searchParams[2])) {
         return true;
       } else {
         return false;
       }
     } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] != "" && searchParams[4] == "") {
-      return false;
+      if (validate.checkIfNotAlphaNum(searchParams[0])
+            && validate.checkIfNotAlphaNum(searchParams[1])
+            && validate.checkIf20Chars(searchParams[0])
+            && validate.checkIf25Chars(searchParams[1])
+            && validate.checkIfDate(searchParams[3])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] != "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] == "" && searchParams[4] != "") {
-      return false;
+      if (validate.checkIfNotAlphaNum(searchParams[0])
+            && validate.checkIfNotAlphaNum(searchParams[1])
+            && validate.checkIf20Chars(searchParams[0])
+            && validate.checkIf25Chars(searchParams[1])
+            && validate.checkIfDate(searchParams[4])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] != "" && searchParams[4] == "") {
-      return false;
+      if (validate.checkIfNotAlphaNum(searchParams[0])
+            && validate.checkIf20Chars(searchParams[0])
+            && validate.checkIfEmail(searchParams[2])
+            && validate.checkIf25Chars(searchParams[2])
+            && validate.checkIfDate(searchParams[3])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] != "") {
-      return false;
+      if (validate.checkIfNotAlphaNum(searchParams[0])
+            && validate.checkIf20Chars(searchParams[0])
+            && validate.checkIfEmail(searchParams[2])
+            && validate.checkIf25Chars(searchParams[2])
+            && validate.checkIfDate(searchParams[4])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] != "" && searchParams[1] == "" && searchParams[2] == ""
             && searchParams[3] != "" && searchParams[4] != "") {
       if (validate.checkIfNotAlphaNum(searchParams[0])
@@ -567,10 +637,26 @@ public class EmployeeService {
       }
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
             && searchParams[3] != "" && searchParams[4] == "") {
-      return false;
+      if (validate.checkIfNotAlphaNum(searchParams[1])
+            && validate.checkIf25Chars(searchParams[1])
+            && validate.checkIfEmail(searchParams[2])
+            && validate.checkIf25Chars(searchParams[2])
+            && validate.checkIfDate(searchParams[3])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
             && searchParams[3] == "" && searchParams[4] != "") {
-      return false;
+      if (validate.checkIfNotAlphaNum(searchParams[1])
+            && validate.checkIf25Chars(searchParams[1])
+            && validate.checkIfEmail(searchParams[2])
+            && validate.checkIf25Chars(searchParams[2])
+            && validate.checkIfDate(searchParams[4])) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] == ""
             && searchParams[3] != "" && searchParams[4] != "") {
       if (validate.checkIfNotAlphaNum(searchParams[1])
@@ -647,7 +733,17 @@ public class EmployeeService {
       }
     } else if (searchParams[0] == "" && searchParams[1] != "" && searchParams[2] != ""
             && searchParams[3] != "" && searchParams[4] != "") {
-      return false;
+      if (validate.checkIfNotAlphaNum(searchParams[1])
+                && validate.checkIf25Chars(searchParams[1])
+                && validate.checkIfEmail(searchParams[2])
+                && validate.checkIf25Chars(searchParams[2])
+                && validate.checkIfDate(searchParams[3])
+                && validate.checkIfDate(searchParams[4])
+                && validate.compareDate(searchParams[3],searchParams[4])) {
+        return true;
+      } else {
+        return false;
+      }
     } else {
       return false;
     }

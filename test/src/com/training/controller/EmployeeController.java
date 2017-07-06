@@ -5,6 +5,8 @@ import com.training.service.JobService;
 import com.training.util.Constants;
 
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.Charset;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -12,6 +14,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.swing.JOptionPane;
 
 public class EmployeeController extends HttpServlet {
   private EmployeeService service;
@@ -48,7 +51,6 @@ public class EmployeeController extends HttpServlet {
       } catch (Exception e) {
         System.out.println(e);
       }
-
       request.setAttribute("jobs", jobService.getJobs());
       request.setAttribute("departments", service.getDepartments());
       request.setAttribute("employee", service.getEmpById(empid));
@@ -107,13 +109,18 @@ public class EmployeeController extends HttpServlet {
     HttpSession session = request.getSession();
 
     if (action.equals("add")) {
-      if (service.addValidateInputs(params) && (!service.emailExist(params[3]))) {
+      JOptionPane.showMessageDialog(null, params[1]);
+      JOptionPane.showMessageDialog(null, Integer.parseInt("FF21",16));
+      System.out.println((char)393);
+//      params[1] = Character.toString((char)65313);
+      if (service.addValidateInputs(params) && (!service.isEmailExist(params[3]))) {
         service.addEmployee(params);
         status = params[1] + " " + params[2] + " has been registered.";
         session.setAttribute("status", status);
         response.sendRedirect("index.jsp");
       } else {
-        request.setAttribute("numErrors", service.addErrStatus(service.addErrorMsgs(params, "")));
+        session.setAttribute("numErrors", service.addErrStatus(service.addErrorMsgs(params, ""),
+            params[6]));
         session.setAttribute("AddEditErrors", service.addErrorMsgs(params,""));
         session.setAttribute("old", service.old(params));
         response.sendRedirect("AddEdit?action=add");
@@ -125,8 +132,8 @@ public class EmployeeController extends HttpServlet {
         session.setAttribute("status", status);
         response.sendRedirect("index.jsp");
       } else {
-        request.setAttribute("numErrors", service.addErrStatus(service
-            .addErrorMsgs(params, oldEmail)));
+        session.setAttribute("numErrors", service.addErrStatus(service
+            .addErrorMsgs(params, oldEmail), params[6]));
         session.setAttribute("AddEditErrors", service.addErrorMsgs(params,oldEmail));
         session.setAttribute("old", service.old(params));
         response.sendRedirect("AddEdit?action=edit&empid=" + params[0] + "&oldEmail=" + oldEmail);
